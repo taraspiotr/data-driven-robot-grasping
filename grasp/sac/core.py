@@ -83,12 +83,12 @@ class SquashedGaussianMLPActor(SquashedGaussianActor):
 
 class SquashedGaussianCNNActor(SquashedGaussianActor):
     def init_net(self, obs_dim, act_dim, hidden_sizes, activation):
-        feature_dim = 256
+        feature_dim = 32
         encoder = make_encoder(
             "pixel",
             obs_shape=obs_dim,
             feature_dim=feature_dim,
-            num_layers=4,
+            num_layers=2,
             num_filters=32,
         )
         head = mlp([feature_dim] + list(hidden_sizes), activation, activation)
@@ -115,12 +115,12 @@ class MLPQFunction(QFunction):
 
 class CNNQFunction(QFunction):
     def init_net(self, obs_dim, act_dim, hidden_sizes, activation):
-        feature_dim = 256
+        feature_dim = 32
         encoder = make_encoder(
             "pixel",
             obs_shape=obs_dim,
             feature_dim=feature_dim,
-            num_layers=4,
+            num_layers=2,
             num_filters=32,
         )
         head = mlp([feature_dim + act_dim] + list(hidden_sizes) + [1], activation)
@@ -169,7 +169,7 @@ class CNNActorCritic(nn.Module):
     ):
         super().__init__()
 
-        obs_dim = observation_space.shape[0]
+        obs_dim = observation_space.shape
         act_dim = action_space.shape[0]
         act_limit = action_space.high[0]
 
