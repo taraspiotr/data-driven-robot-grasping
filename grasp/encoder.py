@@ -66,7 +66,8 @@ class PixelEncoder(nn.Module):
         return h
 
     def forward(self, obs, detach=False):
-        obs = obs[:, :, :, :3].permute(0, 3, 1, 2)
+        # torch.rand(*obs.size(), out=obs)s
+        obs = obs.permute(0, 3, 1, 2)
         h = self.forward_conv(obs)
 
         if detach:

@@ -1,0 +1,17 @@
+gym==0.17.2
+imageio==2.9.0
+joblib
+matplotlib==3.3.3
+neptune-client==0.5.0
+numpy
+pandas==1.1.5
+pybullet==3.0.7
+scikit-image==0.17.2
+scipy 
+seaborn==0.11.1
+torch==1.4.0
+torchaudio==0.4.0
+torchvision==0.5.0
+tqdm==4.56.2
+psutil
+

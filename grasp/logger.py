@@ -13,13 +13,25 @@ import time
 import atexit
 import warnings
 
+import imageio
 import joblib
 import numpy as np
 import neptune
 import torch
 
-from grasp.mpi import proc_id, mpi_statistics_scalar
+# from grasp.mpi import proc_id, mpi_statistics_scalar
 from grasp.utils import convert_json
+
+
+def proc_id():
+    return 0
+
+
+def mpi_statistics_scalar(x, with_min_and_max=False):
+    if with_min_and_max:
+        return np.mean(x), np.std(x), np.min(x), np.max(x)
+    return np.mean(x), np.std(x)
+
 
 color2num = dict(
     gray=30,
@@ -359,3 +371,9 @@ class NeptuneLogger(EpochLogger):
                 val = self.log_current_row.get(key, 0)
                 neptune.log_metric(key, val)
         super().dump_tabular()
+
+    def log_gif(self, frames):
+        fn = f"/tmp/traj.gif"
+        imageio.mimsave(fn, frames, duration=1)
+        neptune.log_image("test_trajectories", fn)
+        pass
