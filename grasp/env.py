@@ -5,15 +5,16 @@ from gym import spaces
 from pybullet_envs.bullet.kuka_diverse_object_gym_env import (
     KukaDiverseObjectEnv as _KukaDiverseObjectEnv,
 )
+from rlpyt.envs.gym import GymEnvWrapper
 
 
 class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # self.observation_space = spaces.Box(low=-8, high=8, shape=(4,))
+        self.observation_space = spaces.Box(low=-8, high=8, shape=(4,))
         # self.observation_space = spaces.Box(
-        #     low=0, high=255, shape=(self._height, self._width, 4)
+        #     low=0, high=255, shape=[self._height * self._width * 3]
         # )
 
     # def _get_random_object(self, num_objects, test):
@@ -46,8 +47,8 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
             o, r, d, i = super().step(action)
         # t = np.ones((self._height, self._width, 1)) * self.time_step
         # o = np.concatenate([o, t], axis=-1)
-        # o = o.flatten() / 255.0
-        # o = self.pos.copy()
+        o = o.flatten() / 255.0
+        o = self.pos.copy()
         # print(o)
         # o[0] = self.time_step
         return o, r, d, i
@@ -64,7 +65,24 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
         o = super().reset()
         # t = np.ones((self._height, self._width, 1)) * self.time_step
         # o = np.concatenate([o, t], axis=-1)
-        # o = o.flatten() / 255.0
-        # o = self.pos.copy()
+        o = o.flatten() / 255.0
+        o = self.pos.copy()
         # o[0] = self.time_step
         return o
+
+
+def create_kuka_gym_diverse_env(test: bool = False):
+    return GymEnvWrapper(
+        KukaDiverseObjectEnv(
+            renders=False,
+            isDiscrete=False,
+            removeHeightHack=False,
+            blockRandom=0,
+            cameraRandom=0,
+            numObjects=5,
+            isTest=test,
+            width=64,
+            height=64,
+            maxSteps=15,
+        )
+    )
