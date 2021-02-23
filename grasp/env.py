@@ -12,7 +12,7 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.observation_space = spaces.Box(low=-8, high=8, shape=(4,))
+        # self.observation_space = spaces.Box(low=-8, high=8, shape=(4,))
         # self.observation_space = spaces.Box(
         #     low=0, high=255, shape=[self._height * self._width * 3]
         # )
@@ -47,8 +47,8 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
             o, r, d, i = super().step(action)
         # t = np.ones((self._height, self._width, 1)) * self.time_step
         # o = np.concatenate([o, t], axis=-1)
-        o = o.flatten() / 255.0
-        o = self.pos.copy()
+        # o = o.flatten() / 255.0
+        # o = self.pos.copy()
         # print(o)
         # o[0] = self.time_step
         return o, r, d, i
@@ -65,24 +65,34 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
         o = super().reset()
         # t = np.ones((self._height, self._width, 1)) * self.time_step
         # o = np.concatenate([o, t], axis=-1)
-        o = o.flatten() / 255.0
-        o = self.pos.copy()
+        # o = o.flatten() / 255.0
+        # o = self.pos.copy()
         # o[0] = self.time_step
         return o
 
 
-def create_kuka_gym_diverse_env(test: bool = False):
+def create_kuka_gym_diverse_env(
+    is_discrete: bool = False,
+    use_height_hack: bool = True,
+    block_random: float = 0,
+    camera_random: float = 0,
+    test: bool = False,
+    num_objects: int = 5,
+    width: int = 64,
+    height: int = 64,
+    max_steps: int = 8,
+):
     return GymEnvWrapper(
         KukaDiverseObjectEnv(
             renders=False,
-            isDiscrete=False,
-            removeHeightHack=False,
-            blockRandom=0,
-            cameraRandom=0,
-            numObjects=5,
+            isDiscrete=is_discrete,
+            removeHeightHack=not use_height_hack,
+            blockRandom=block_random,
+            cameraRandom=camera_random,
+            numObjects=num_objects,
             isTest=test,
-            width=64,
-            height=64,
-            maxSteps=15,
+            width=width,
+            height=height,
+            maxSteps=max_steps,
         )
     )
