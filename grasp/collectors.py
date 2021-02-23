@@ -5,12 +5,13 @@ import numpy as np
 from rlpyt.samplers.serial.collectors import SerialEvalCollector
 from rlpyt.utils.buffer import buffer_from_example, torchify_buffer, numpify_buffer
 from rlpyt.utils.logging import logger
+from mrunner.helpers import client_helper
 
 
 def log_trajectories(trajectories: np.ndarray) -> None:
     fn = f"/tmp/trajectories.gif"
     imageio.mimsave(fn, trajectories, duration=0.5)
-    neptune.log_image("trajectories", fn)
+    client_helper.experiment_.log_image("trajectories", fn)
 
 
 class SerialEvalCollectorLogger(SerialEvalCollector):
