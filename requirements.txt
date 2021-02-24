@@ -15,5 +15,5 @@ torchvision==0.5.0
 tqdm==4.56.2
 psutil
 pyprind
-git+https://gitlab.com/awarelab/mrunner.git
-git+https://github.com/astooke/rlpyt
+git+https://gitlab.com/taraspiotr/mrunner.git
+git+https://github.com/astooke/rlpyt.git

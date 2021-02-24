@@ -1,6 +1,7 @@
 from typing import Dict, Any
 
-import neptune
+import argparse
+
 from rlpyt.samplers.serial.sampler import SerialSampler
 from rlpyt.algos.qpg.sac import SAC
 from rlpyt.agents.qpg.sac_agent import SacAgent
@@ -69,27 +70,6 @@ def build_and_train(config: Dict[str, Any]):
 
 
 if __name__ == "__main__":
-
-    # config = {
-    #     "name": "sac_kuka_diverse",
-    #     "alpha": 1e-3,
-    #     "learning_rate": 3e-4,
-    #     "env_num_objects": 5,
-    #     "env_camera_random": 0,
-    #     "env_block_random": 0,
-    #     "env_use_height_hack": True,
-    #     "model_hidden_sizes": (256, 256),
-    #     "encoder_feature_dim": 32,
-    #     "encoder_num_layers": 2,
-    #     "encoder_num_filters": 32,
-    #     "cuda_idx": 0,
-    #     "seed": 0,
-    # }
-
-    # neptune.init(project_qualified_name="taraspiotr/data-driven-robot-grasping")
-    # neptune.create_experiment(name=config["name"], params=config)
-    # setup_logger()
-    # build_and_train(config)
     config = get_configuration(print_diagnostics=True, with_neptune=True)
     setup_logger()
     experiment_id = config.pop("experiment_id")

@@ -1,5 +1,4 @@
 import imageio
-import neptune
 import numpy as np
 
 from rlpyt.samplers.serial.collectors import SerialEvalCollector
