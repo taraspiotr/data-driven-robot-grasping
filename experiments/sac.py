@@ -1,7 +1,5 @@
 from typing import Dict, Any
 
-import argparse
-
 from rlpyt.samplers.serial.sampler import SerialSampler
 from rlpyt.algos.qpg.sac import SAC
 from rlpyt.agents.qpg.sac_agent import SacAgent
@@ -61,8 +59,8 @@ def build_and_train(config: Dict[str, Any]):
         sampler=sampler,
         n_steps=1e6,
         log_interval_steps=1e3,
-        affinity=dict(cuda_idx=config["cuda_idx"]),
-        seed=config["seed"],
+        affinity=dict(cuda_idx=config.get("cuda_idx")),
+        seed=config.get("seed"),
     )
     log_dir = f"/tmp/{config['name']}"
     with logger_context(log_dir, 0, config["name"], config, override_prefix=True):

@@ -2,7 +2,6 @@ from typing import Any
 
 from copy import deepcopy
 
-import neptune
 import rlpyt.utils.logging.logger as logger
 from mrunner.helpers import client_helper
 
