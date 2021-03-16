@@ -51,7 +51,7 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
         # o = self.pos.copy()
         # print(o)
         # o[0] = self.time_step
-        return o, r, d, i
+        return o.transpose(2, 0, 1), r, d, i
 
     def _step_continuous(self, action):
         # print(action)
@@ -68,7 +68,7 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
         # o = o.flatten() / 255.0
         # o = self.pos.copy()
         # o[0] = self.time_step
-        return o
+        return o.transpose(2, 0, 1)
 
 
 def create_kuka_gym_diverse_env(

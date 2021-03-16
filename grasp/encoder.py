@@ -13,8 +13,6 @@ OUT_DIM = {2: 39, 4: 35, 6: 31}
 # for 64 x 64 inputs
 OUT_DIM_64 = {2: 29, 4: 25, 6: 21}
 
-# OUT_DIM = {4: (13, 18)}
-
 
 class PixelEncoder(nn.Module):
     """Convolutional encoder of pixels observations."""
@@ -23,6 +21,8 @@ class PixelEncoder(nn.Module):
         self, obs_shape, feature_dim, num_layers=2, num_filters=32, output_logits=False
     ):
         super().__init__()
+
+        obs_shape = [3, 64, 64]
 
         assert len(obs_shape) == 3
         self.obs_shape = obs_shape
@@ -35,7 +35,7 @@ class PixelEncoder(nn.Module):
 
         # out_dim = OUT_DIM[num_layers]
 
-        self.convs = nn.ModuleList([nn.Conv2d(obs_shape[2], num_filters, 3, stride=2)])
+        self.convs = nn.ModuleList([nn.Conv2d(obs_shape[0], num_filters, 3, stride=2)])
         for i in range(num_layers - 1):
             self.convs.append(nn.Conv2d(num_filters, num_filters, 3, stride=1))
 
@@ -66,8 +66,7 @@ class PixelEncoder(nn.Module):
         return h
 
     def forward(self, obs, detach=False):
-        # torch.rand(*obs.size(), out=obs)s
-        obs = obs.permute(0, 3, 1, 2) / 255.0
+        obs = obs / 255.0
         h = self.forward_conv(obs)
 
         if detach:

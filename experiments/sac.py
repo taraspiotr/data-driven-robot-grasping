@@ -1,8 +1,11 @@
 from typing import Dict, Any
 
+import functools
+
 from rlpyt.samplers.serial.sampler import SerialSampler
 from rlpyt.algos.qpg.sac import SAC
-from rlpyt.agents.qpg.sac_agent import SacAgent
+
+# from rlpyt.agents.qpg.sac_agent import SacAgent
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
 from mrunner.helpers.client_helper import get_configuration
@@ -13,6 +16,11 @@ from grasp.policies import PiCnnModel
 from grasp.value_functions import QofMuCnnModel
 from grasp.collectors import SerialEvalCollectorLogger
 
+# from grasp.sampler import RadSerialSampler
+from grasp.data_augs import get_augmentations
+from grasp.agent import RadSacAgent
+from grasp.replay import UniformRadReplayBuffer
+
 
 def build_and_train(config: Dict[str, Any]):
 
@@ -21,7 +29,10 @@ def build_and_train(config: Dict[str, Any]):
         camera_random=config["env_camera_random"],
         block_random=config["env_block_random"],
         use_height_hack=config["env_use_height_hack"],
+        width=config.get("observation_size", 64),
+        height=config.get("observation_size", 64),
     )
+    augmentations = config.get("augmentations", [])
     sampler = SerialSampler(
         EnvCls=create_kuka_gym_diverse_env,
         env_kwargs=dict(test=False, **env_kwargs),
@@ -39,6 +50,9 @@ def build_and_train(config: Dict[str, Any]):
         min_steps_learn=int(1e3),
         fixed_alpha=config["alpha"],
         learning_rate=config["learning_rate"],
+        ReplayBufferCls=functools.partial(
+            UniformRadReplayBuffer, augs_func=get_augmentations(augmentations)
+        ),
     )  # Run with defaults.
 
     model_kwargs: Dict[str, Any] = dict(
@@ -47,11 +61,12 @@ def build_and_train(config: Dict[str, Any]):
         encoder_num_layers=config["encoder_num_layers"],
         encoder_num_filters=config["encoder_num_filters"],
     )
-    agent = SacAgent(
+    agent = RadSacAgent(
         ModelCls=PiCnnModel,
         QModelCls=QofMuCnnModel,
         model_kwargs=model_kwargs,
         q_model_kwargs=model_kwargs,
+        augmentations=augmentations,
     )
     runner = MinibatchRlEval(
         algo=algo,

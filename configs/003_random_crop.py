@@ -8,15 +8,15 @@ config = {
     "model_hidden_sizes": (256, 256),
     "encoder_num_filters": 32,
     "cuda_idx": 0,
+    "learning_rate": 3e-3,
+    "alpha": None,
+    "env_block_random": 0,
+    "encoder_num_layers": 2,
+    "encoder_feature_dim": 32,
+    "augmentations": ["crop"],
 }
 
-params_grid = {
-    "alpha": [None, 1e-3],
-    "learning_rate": [3e-4, 3e-3],
-    "env_block_random": [0, 0.3],
-    "encoder_num_layers": [2, 4],
-    "encoder_feature_dim": [32, 128],
-}
+params_grid = {"observation_size": [70, 80, 90]}
 name = globals()["script"][:-3]
 
 experiments_list = create_experiments_helper(

@@ -9,7 +9,7 @@ from mrunner.helpers import client_helper
 
 def log_trajectories(trajectories: np.ndarray) -> None:
     fn = f"/tmp/trajectories.gif"
-    imageio.mimsave(fn, trajectories, duration=0.5)
+    imageio.mimsave(fn, trajectories.transpose(0, 2, 3, 1), duration=0.5)
     client_helper.experiment_.log_image("trajectories", fn)
 
 
