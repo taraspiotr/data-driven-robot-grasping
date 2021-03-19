@@ -2,10 +2,9 @@ from typing import Dict, Any
 
 import functools
 
-from rlpyt.samplers.serial.sampler import SerialSampler
+from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.algos.qpg.sac import SAC
-
-# from rlpyt.agents.qpg.sac_agent import SacAgent
+from rlpyt.utils.launching.affinity import make_affinity
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
 from mrunner.helpers.client_helper import get_configuration
@@ -14,9 +13,8 @@ from grasp.env import create_kuka_gym_diverse_env
 from grasp.logger import setup_logger
 from grasp.policies import PiCnnModel
 from grasp.value_functions import QofMuCnnModel
-from grasp.collectors import SerialEvalCollectorLogger
 
-# from grasp.sampler import RadSerialSampler
+# from grasp.collectors import SerialEvalCollectorLogger
 from grasp.data_augs import get_augmentations
 from grasp.agent import RadSacAgent
 from grasp.replay import UniformRadReplayBuffer
@@ -33,17 +31,16 @@ def build_and_train(config: Dict[str, Any]):
         height=config.get("observation_size", 64),
     )
     augmentations = config.get("augmentations", [])
-    sampler = SerialSampler(
+    sampler = CpuSampler(
         EnvCls=create_kuka_gym_diverse_env,
         env_kwargs=dict(test=False, **env_kwargs),
         eval_env_kwargs=dict(test=True, **env_kwargs),
         batch_T=1,  # One time-step per sampler iteration.
-        batch_B=1,  # One environment (i.e. sampler Batch dimension).
+        batch_B=config.get("batch_B", 1),
         max_decorrelation_steps=0,
-        eval_n_envs=1,
+        eval_n_envs=config.get("eval_n_envs", 1),
         eval_max_steps=int(51e3),
         eval_max_trajectories=50,
-        eval_CollectorCls=SerialEvalCollectorLogger,
     )
     algo = SAC(
         bootstrap_timelimit=False,
@@ -74,8 +71,10 @@ def build_and_train(config: Dict[str, Any]):
         sampler=sampler,
         n_steps=1e6,
         log_interval_steps=1e3,
-        affinity=dict(cuda_idx=config.get("cuda_idx")),
         seed=config.get("seed"),
+        affinity=make_affinity(
+            n_cpu_core=config.get("n_cpu_core", 1), n_gpu=config.get("n_gpu", 1)
+        ),
     )
     log_dir = f"/tmp/{config['name']}"
     with logger_context(log_dir, 0, config["name"], config, override_prefix=True):
