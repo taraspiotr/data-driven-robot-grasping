@@ -3,10 +3,17 @@ from typing import Dict, Any
 import functools
 
 from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
+from rlpyt.samplers.serial.sampler import SerialSampler
 from rlpyt.algos.qpg.sac import SAC
-from rlpyt.utils.launching.affinity import make_affinity
+from rlpyt.utils.launching.affinity import (
+    make_affinity,
+    encode_affinity,
+    decode_affinity,
+    remove_run_slot,
+)
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
+from rlpyt.models.qpg.mlp import PiMlpModel, QofMuMlpModel
 from mrunner.helpers.client_helper import get_configuration
 
 from grasp.env import create_kuka_gym_diverse_env
@@ -14,7 +21,7 @@ from grasp.logger import setup_logger
 from grasp.policies import PiCnnModel
 from grasp.value_functions import QofMuCnnModel
 
-# from grasp.collectors import SerialEvalCollectorLogger
+from grasp.collectors import SerialEvalCollectorLogger
 from grasp.data_augs import get_augmentations
 from grasp.agent import RadSacAgent
 from grasp.replay import UniformRadReplayBuffer
@@ -22,26 +29,42 @@ from grasp.replay import UniformRadReplayBuffer
 
 def build_and_train(config: Dict[str, Any]):
 
+    from_pixels = config["from_pixels"]
     env_kwargs: Dict[str, Any] = dict(
         num_objects=config["env_num_objects"],
         camera_random=config["env_camera_random"],
         block_random=config["env_block_random"],
         use_height_hack=config["env_use_height_hack"],
-        width=config.get("observation_size", 64),
-        height=config.get("observation_size", 64),
+        width=config["observation_size"],
+        height=config["observation_size"],
+        reward_shaping=config["reward_shaping"],
+        from_pixels=from_pixels,
     )
-    augmentations = config.get("augmentations", [])
-    sampler = CpuSampler(
+    augmentations = config["augmentations"]
+    # sampler = CpuSampler(
+    #     EnvCls=create_kuka_gym_diverse_env,
+    #     env_kwargs=dict(test=False, **env_kwargs),
+    #     eval_env_kwargs=dict(test=True, **env_kwargs),
+    #     batch_T=1,  # One time-step per sampler iteration.
+    #     batch_B=config.get("batch_B", 1),
+    #     max_decorrelation_steps=0,
+    #     eval_n_envs=config.get("eval_n_envs", 1),
+    #     eval_max_steps=int(51e3),
+    #     eval_max_trajectories=50,
+    # )
+    sampler = SerialSampler(
         EnvCls=create_kuka_gym_diverse_env,
         env_kwargs=dict(test=False, **env_kwargs),
         eval_env_kwargs=dict(test=True, **env_kwargs),
         batch_T=1,  # One time-step per sampler iteration.
-        batch_B=config.get("batch_B", 1),
+        batch_B=1,  # One environment (i.e. sampler Batch dimension).
         max_decorrelation_steps=0,
-        eval_n_envs=config.get("eval_n_envs", 1),
+        eval_n_envs=1,
         eval_max_steps=int(51e3),
         eval_max_trajectories=50,
+        eval_CollectorCls=SerialEvalCollectorLogger,
     )
+
     algo = SAC(
         bootstrap_timelimit=False,
         min_steps_learn=int(1e3),
@@ -59,21 +82,31 @@ def build_and_train(config: Dict[str, Any]):
         encoder_num_filters=config["encoder_num_filters"],
     )
     agent = RadSacAgent(
-        ModelCls=PiCnnModel,
-        QModelCls=QofMuCnnModel,
-        model_kwargs=model_kwargs,
+        ModelCls=PiCnnModel if from_pixels else PiMlpModel,
+        QModelCls=QofMuCnnModel if from_pixels else QofMuMlpModel,
+        model_kwargs=dict(**model_kwargs, detach_encoder=config["detach_encoder"]),
         q_model_kwargs=model_kwargs,
         augmentations=augmentations,
     )
+    run_slot, aff_code = remove_run_slot(
+        encode_affinity(
+            run_slot=0,
+            n_cpu_core=config.get("n_cpu_core", 1),
+            n_gpu=config.get("n_gpu", 1),
+        )
+    )
+    print(run_slot, decode_affinity(aff_code))
     runner = MinibatchRlEval(
         algo=algo,
         agent=agent,
         sampler=sampler,
         n_steps=1e6,
         log_interval_steps=1e3,
-        seed=config.get("seed"),
+        seed=config["seed"],
         affinity=make_affinity(
-            n_cpu_core=config.get("n_cpu_core", 1), n_gpu=config.get("n_gpu", 1)
+            n_cpu_core=config.get("n_cpu_core", 1),
+            n_gpu=config.get("n_gpu", 1),
+            cpu_per_run=config.get("n_cpu_core", 1),
         ),
     )
     log_dir = f"/tmp/{config['name']}"

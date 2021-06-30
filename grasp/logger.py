@@ -10,7 +10,9 @@ _rec_tabular = deepcopy(logger.record_tabular)
 
 def record_tabular(key: str, val: Any, *args, **kwargs):
     _rec_tabular(key, val, *args, **kwargs)
-    client_helper.experiment_.send_metric(key, val)
+    if val != val:
+        val = 0
+    client_helper.experiment_[key].log(val)
 
 
 def setup_logger():

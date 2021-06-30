@@ -8,6 +8,6 @@ class RadSacAgent(SacAgent):
         super().__init__(*args, **kwargs)
         self.augmentations = augmentations
 
-    def step(self, observation, prev_action, prev_reward):
-        observation = rad.center_crop(observation)
-        return super().step(observation, prev_action, prev_reward)
+    # def step(self, observation, prev_action, prev_reward):
+    #     observation = rad.center_crop(observation)
+    #     return super().step(observation, prev_action, prev_reward)

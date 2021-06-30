@@ -23,6 +23,7 @@ class PixelEncoder(nn.Module):
         super().__init__()
 
         obs_shape = [3, 64, 64]
+        # obs_shape = [3, 84, 84]
 
         assert len(obs_shape) == 3
         self.obs_shape = obs_shape
@@ -52,7 +53,6 @@ class PixelEncoder(nn.Module):
         return mu + eps * std
 
     def forward_conv(self, obs):
-        obs = obs / 255.0
         self.outputs["obs"] = obs
 
         conv = torch.relu(self.convs[0](obs))
@@ -67,6 +67,7 @@ class PixelEncoder(nn.Module):
 
     def forward(self, obs, detach=False):
         obs = obs / 255.0
+        # print(obs.size(), obs.min(), obs.max(), obs.mean())
         h = self.forward_conv(obs)
 
         if detach:

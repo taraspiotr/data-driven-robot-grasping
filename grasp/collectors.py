@@ -5,12 +5,13 @@ from rlpyt.samplers.serial.collectors import SerialEvalCollector
 from rlpyt.utils.buffer import buffer_from_example, torchify_buffer, numpify_buffer
 from rlpyt.utils.logging import logger
 from mrunner.helpers import client_helper
+from neptune.new.types import File
 
 
 def log_trajectories(trajectories: np.ndarray) -> None:
-    fn = f"/tmp/trajectories.gif"
+    fn = "/tmp/trajectories.gif"
     imageio.mimsave(fn, trajectories.transpose(0, 2, 3, 1), duration=0.5)
-    client_helper.experiment_.log_image("trajectories", fn)
+    client_helper.experiment_["trajectories"].log(File(fn))
 
 
 class SerialEvalCollectorLogger(SerialEvalCollector):
@@ -37,6 +38,7 @@ class SerialEvalCollectorLogger(SerialEvalCollector):
             act_pyt, agent_info = self.agent.step(obs_pyt, act_pyt, rew_pyt)
             action = numpify_buffer(act_pyt)
             for b, env in enumerate(self.envs):
+                print(action[b])
                 o, r, d, env_info = env.step(action[b])
                 if b == 0:
                     observed_traj.append(o)
@@ -64,5 +66,5 @@ class SerialEvalCollectorLogger(SerialEvalCollector):
                 break
         if t == self.max_T - 1:
             logger.log("Evaluation reached max num time steps " f"({self.max_T}).")
-        log_trajectories(np.stack(observed_traj))
+        # log_trajectories(np.stack(observed_traj))
         return completed_traj_infos

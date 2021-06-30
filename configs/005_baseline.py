@@ -15,9 +15,9 @@ config = {
     "encoder_feature_dim": 32,
     "augmentations": [],
     "observation_size": 64,
-    "batch_B": 8,
+    "batch_B": 2,
     "eval_n_envs": 1,
-    "n_cpu_core": 8,
+    "n_cpu_core": 2,
     "n_gpu": 1,
 }
 

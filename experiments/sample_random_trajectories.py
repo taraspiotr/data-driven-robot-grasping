@@ -32,8 +32,8 @@ def sample_trajectory(env, agent):
     return np.array(obs), np.array(rewards), np.array(actions)
 
 
-def main(num_traj, storage_dir, **kwargs):
-    env = create_kuka_gym_diverse_env()
+def main(num_traj, storage_dir, is_discrete, **kwargs):
+    env = create_kuka_gym_diverse_env(is_discrete=is_discrete)
     agent = RandomAgent(env.action_space)
     trajectories = []
 
