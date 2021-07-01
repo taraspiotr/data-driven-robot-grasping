@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Dict
 
 import torch
 from rlpyt.models.mlp import MlpModel
@@ -21,6 +21,7 @@ class PiCnnModel(torch.nn.Module):
         detach_encoder: bool = False
     ):
         super().__init__()
+        observation_shape = observation_shape["pixels"]
         self._obs_ndim = len(observation_shape)
         self._action_size = action_size
 
@@ -38,17 +39,18 @@ class PiCnnModel(torch.nn.Module):
         )
         self._detach_encoder = detach_encoder
 
+
     def forward(
         self,
-        observation: torch.Tensor,
+        observation: Dict[str, torch.Tensor],
         prev_action: torch.Tensor,
         prev_reward: torch.Tensor,
     ):
+        observation = observation.pixels
         lead_dim, T, B, shape = infer_leading_dims(observation, self._obs_ndim)
-        encoder_output = self.encoder(observation.view(T * B, *shape))
-        if self._detach_encoder:
-            encoder_output = encoder_output.detach()
-        output = self.head(encoder_output)
+        
+        encoder_output = self.encoder(observation.view(T * B, *shape), detach=self._detach_encoder)
+        output = self.head(encoder_output.detach())
         mu, log_std = output[:, : self._action_size], output[:, self._action_size :]
         mu, log_std = restore_leading_dims((mu, log_std), lead_dim, T, B)
         return mu, log_std

@@ -4,7 +4,7 @@ import functools
 
 from rlpyt.samplers.parallel.cpu.sampler import CpuSampler
 from rlpyt.samplers.serial.sampler import SerialSampler
-from rlpyt.algos.qpg.sac import SAC
+# from rlpyt.algos.qpg.sac import SAC
 from rlpyt.utils.launching.affinity import (
     make_affinity,
     encode_affinity,
@@ -23,13 +23,17 @@ from grasp.value_functions import QofMuCnnModel
 
 from grasp.collectors import SerialEvalCollectorLogger
 from grasp.data_augs import get_augmentations
-from grasp.agent import RadSacAgent
+from grasp.agent import SacAgent
 from grasp.replay import UniformRadReplayBuffer
+from grasp.sac import SAC
 
 
 def build_and_train(config: Dict[str, Any]):
 
-    from_pixels = config["from_pixels"]
+    from_state = config["from_state"] or config["aac"]
+    from_pixels = config["from_pixels"] or config["aac"]
+    augmentations = config["augmentations"]
+
     env_kwargs: Dict[str, Any] = dict(
         num_objects=config["env_num_objects"],
         camera_random=config["env_camera_random"],
@@ -38,9 +42,10 @@ def build_and_train(config: Dict[str, Any]):
         width=config["observation_size"],
         height=config["observation_size"],
         reward_shaping=config["reward_shaping"],
+        from_state=from_state,
         from_pixels=from_pixels,
     )
-    augmentations = config["augmentations"]
+
     # sampler = CpuSampler(
     #     EnvCls=create_kuka_gym_diverse_env,
     #     env_kwargs=dict(test=False, **env_kwargs),
@@ -75,19 +80,21 @@ def build_and_train(config: Dict[str, Any]):
         ),
     )  # Run with defaults.
 
+
     model_kwargs: Dict[str, Any] = dict(
         hidden_sizes=config["model_hidden_sizes"],
         encoder_feature_dim=config["encoder_feature_dim"],
         encoder_num_layers=config["encoder_num_layers"],
         encoder_num_filters=config["encoder_num_filters"],
     )
-    agent = RadSacAgent(
-        ModelCls=PiCnnModel if from_pixels else PiMlpModel,
-        QModelCls=QofMuCnnModel if from_pixels else QofMuMlpModel,
+    agent = SacAgent(
+        ModelCls=PiCnnModel,
+        QModelCls=QofMuCnnModel,
         model_kwargs=dict(**model_kwargs, detach_encoder=config["detach_encoder"]),
         q_model_kwargs=model_kwargs,
         augmentations=augmentations,
     )
+    
     run_slot, aff_code = remove_run_slot(
         encode_affinity(
             run_slot=0,

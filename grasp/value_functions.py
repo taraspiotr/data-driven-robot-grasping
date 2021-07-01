@@ -20,6 +20,7 @@ class QofMuCnnModel(torch.nn.Module):
         encoder_num_filters: int = 32,
     ):
         """Instantiate neural net according to inputs."""
+        observation_shape = observation_shape["pixels"]
         super().__init__()
         self._obs_ndim = len(observation_shape)
 
@@ -37,6 +38,7 @@ class QofMuCnnModel(torch.nn.Module):
         )
 
     def forward(self, observation, prev_action, prev_reward, action):
+        observation = observation.pixels
         lead_dim, T, B, shape = infer_leading_dims(observation, self._obs_ndim)
         encoder_output = self.encoder(observation.view(T * B, *shape))
         q_input = torch.cat([encoder_output, action.view(T * B, -1)], dim=1)

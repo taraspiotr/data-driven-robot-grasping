@@ -38,7 +38,7 @@ class SerialEvalCollectorLogger(SerialEvalCollector):
             act_pyt, agent_info = self.agent.step(obs_pyt, act_pyt, rew_pyt)
             action = numpify_buffer(act_pyt)
             for b, env in enumerate(self.envs):
-                print(action[b])
+                # print(action[b])
                 o, r, d, env_info = env.step(action[b])
                 if b == 0:
                     observed_traj.append(o)
