@@ -270,6 +270,7 @@ class SAC(RlAlgorithm):
         if self.lambda_ > 0:
             t = (agent_inputs.observation.state[:, 2] - 0.08) / 0.06 + 1 # calculate the timestep left based on z to know how many steps we have left
             dxy = (agent_inputs.observation.state[:, 4:6] - agent_inputs.observation.state[:, :2]) / (0.06 * t[:, None]) # calculate heuristic policy in x and y
+            dxy = torch.clip(dxy, min=-1, max=1)
             pi_loss += self._lambda(itr) * torch.mean(torch.sum((dxy - pi_mean[:, :2]) ** 2, dim=1)) # mse between heuristic policy and student in x and y (ignore the angle)
 
         if self.target_entropy is not None and self.fixed_alpha is None:
