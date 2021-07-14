@@ -261,16 +261,16 @@ class SAC(RlAlgorithm):
         else:
             raise NotImplementedError
 
+        # these are commented by rlpyt authors
         # if self.policy_output_regularization > 0:
         #     pi_losses += self.policy_output_regularization * torch.mean(
         #         0.5 * pi_mean ** 2 + 0.5 * pi_log_std ** 2, dim=-1)
         pi_loss = valid_mean(pi_losses, valid)
 
         if self.lambda_ > 0:
-            t = (agent_inputs.observation.state[:, 2] - 0.08) / 0.06 + 1
-            dxy = (agent_inputs.observation.state[:, 4:6] - agent_inputs.observation.state[:, :2]) / (0.06 * t[:, None])
-            # import pdb; pdb.set_trace()
-            pi_loss += self._lambda(itr) * torch.mean(torch.sum((dxy - pi_mean[:, :2]) ** 2, dim=1))
+            t = (agent_inputs.observation.state[:, 2] - 0.08) / 0.06 + 1 # calculate the timestep left based on z to know how many steps we have left
+            dxy = (agent_inputs.observation.state[:, 4:6] - agent_inputs.observation.state[:, :2]) / (0.06 * t[:, None]) # calculate heuristic policy in x and y
+            pi_loss += self._lambda(itr) * torch.mean(torch.sum((dxy - pi_mean[:, :2]) ** 2, dim=1)) # mse between heuristic policy and student in x and y (ignore the angle)
 
         if self.target_entropy is not None and self.fixed_alpha is None:
             alpha_losses = - self._log_alpha * (log_pi.detach() + self.target_entropy)
