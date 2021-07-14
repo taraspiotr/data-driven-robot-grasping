@@ -18,7 +18,7 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
 
         obs_space = {}
         if self._from_state:
-            obs_space["state"] = spaces.Box(low=-1, high=1, shape=(4 + 7 * self._numObjects,))
+            obs_space["state"] = spaces.Box(low=-1, high=1, shape=(4 + 3 * self._numObjects,))
         if self._from_pixels:
             obs_space["pixels"] = spaces.Box(low=0, high=255, shape=(3, self._height, self._width))
 
@@ -31,7 +31,7 @@ class KukaDiverseObjectEnv(_KukaDiverseObjectEnv):
             for uid in self._objectUids:
                 pos, quaternion = self._p.getBasePositionAndOrientation(uid)
                 o += list(pos)
-                o += list(quaternion)
+                # o += list(quaternion)
             observation["state"] = np.array(o)
         if self._from_pixels:
             o = super()._get_observation()

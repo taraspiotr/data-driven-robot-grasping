@@ -66,5 +66,6 @@ class SerialEvalCollectorLogger(SerialEvalCollector):
                 break
         if t == self.max_T - 1:
             logger.log("Evaluation reached max num time steps " f"({self.max_T}).")
-        # log_trajectories(np.stack(observed_traj))
+        # import pdb; pdb.set_trace()
+        log_trajectories(np.stack([o.pixels for o in observed_traj]))
         return completed_traj_infos

@@ -13,13 +13,13 @@ from rlpyt.utils.launching.affinity import (
 )
 from rlpyt.runners.minibatch_rl import MinibatchRlEval
 from rlpyt.utils.logging.context import logger_context
-from rlpyt.models.qpg.mlp import PiMlpModel, QofMuMlpModel
+# from rlpyt.models.qpg.mlp import PiMlpModel, QofMuMlpModel
 from mrunner.helpers.client_helper import get_configuration
 
 from grasp.env import create_kuka_gym_diverse_env
 from grasp.logger import setup_logger
-from grasp.policies import PiCnnModel
-from grasp.value_functions import QofMuCnnModel
+from grasp.policies import PiCnnModel, PiMlpModel
+from grasp.value_functions import QofMuCnnModel, QofMuMlpModel
 
 from grasp.collectors import SerialEvalCollectorLogger
 from grasp.data_augs import get_augmentations
@@ -57,6 +57,7 @@ def build_and_train(config: Dict[str, Any]):
     #     eval_max_steps=int(51e3),
     #     eval_max_trajectories=50,
     # )
+    
     sampler = SerialSampler(
         EnvCls=create_kuka_gym_diverse_env,
         env_kwargs=dict(test=False, **env_kwargs),
@@ -78,21 +79,46 @@ def build_and_train(config: Dict[str, Any]):
         ReplayBufferCls=functools.partial(
             UniformRadReplayBuffer, augs_func=get_augmentations(augmentations)
         ),
+        lambda_=config["lambda"]
     )  # Run with defaults.
 
 
-    model_kwargs: Dict[str, Any] = dict(
-        hidden_sizes=config["model_hidden_sizes"],
-        encoder_feature_dim=config["encoder_feature_dim"],
-        encoder_num_layers=config["encoder_num_layers"],
-        encoder_num_filters=config["encoder_num_filters"],
-    )
+    if config["aac"]:
+        pi_model = PiCnnModel
+        pi_model_kwargs: Dict[str, Any] = dict(
+            hidden_sizes=config["model_hidden_sizes"],
+            encoder_feature_dim=config["encoder_feature_dim"],
+            encoder_num_layers=config["encoder_num_layers"],
+            encoder_num_filters=config["encoder_num_filters"],
+        )
+        q_model = QofMuMlpModel
+        q_model_kwargs = dict(
+            hidden_sizes=config["model_hidden_sizes"],
+        )
+    else:
+        pi_model = PiCnnModel
+        pi_model_kwargs: Dict[str, Any] = dict(
+            hidden_sizes=config["model_hidden_sizes"],
+            encoder_feature_dim=config["encoder_feature_dim"],
+            encoder_num_layers=config["encoder_num_layers"],
+            encoder_num_filters=config["encoder_num_filters"],
+            detach_encoder=config["detach_encoder"]
+        )
+        q_model = QofMuCnnModel
+        q_model_kwargs = dict(
+            hidden_sizes=config["model_hidden_sizes"],
+            encoder_feature_dim=config["encoder_feature_dim"],
+            encoder_num_layers=config["encoder_num_layers"],
+            encoder_num_filters=config["encoder_num_filters"],
+        )
+
+
     agent = SacAgent(
-        ModelCls=PiCnnModel,
-        QModelCls=QofMuCnnModel,
-        model_kwargs=dict(**model_kwargs, detach_encoder=config["detach_encoder"]),
-        q_model_kwargs=model_kwargs,
-        augmentations=augmentations,
+        ModelCls=pi_model,
+        QModelCls=q_model,
+        model_kwargs=pi_model_kwargs,
+        q_model_kwargs=q_model_kwargs,
+        # augmentations=augmentations,
     )
     
     run_slot, aff_code = remove_run_slot(
